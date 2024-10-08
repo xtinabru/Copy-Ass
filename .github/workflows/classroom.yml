@@ -1,0 +1,52 @@
+name: Autograding Tests
+on:
+  - push
+  - workflow_dispatch
+  - repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'oracle'
+      - name: Test VideoFile class
+        id: video_test
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "VideoFile"
+          command: gradle test --tests oamk.stream.VideoFileTest
+          timeout: 5
+          max-score: 1          
+      - name: Test ReadProduct class
+        id: read_test
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "ReadProduct"
+          command: gradle test --tests oamk.stream.ReadProductTest
+          timeout: 5
+          max-score: 3
+      - name: Test Stock class
+        id: stock_test
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Stock"
+          command: gradle test --tests oamk.stream.StockTest
+          timeout: 5
+          max-score: 3
+      - name: Autograding Report
+        uses: classroom-resources/autograding-grading-reporter@v1
+        env:
+          VIDEO_TEST_RESULTS: "${{steps.video_test.outputs.result}}"
+          READ_TEST_RESULTS: "${{steps.read_test.outputs.result}}"
+          STOCK_TEST_RESULTS: "${{steps.stock_test.outputs.result}}"
+        with:
+          runners: video_test,read_test,stock_test
